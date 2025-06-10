@@ -51,7 +51,7 @@ impl InpodNamespace {
                     workload_namespace: Namespace {
                         id: ns
                             .namespace_id
-                            .expect("There must always be a namespace id"),
+                            .unwrap_or(0), // 0 means the compartment ID is not yet specified
                         guid: ns.id,
                     },
                 }),
@@ -81,6 +81,9 @@ impl InpodNamespace {
 
 // hop into a namespace
 fn setns(namespace: u32) -> std::io::Result<()> {
+    if namespace == 0 {
+        return Err(std::io::Error::other("undefined compartment ID"));
+    }
     let error = unsafe { SetCurrentThreadCompartmentId(namespace) };
     if error.0 != 0 {
         return Err(std::io::Error::from_raw_os_error(error.0 as i32));
